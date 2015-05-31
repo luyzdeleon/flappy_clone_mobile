@@ -1,0 +1,20 @@
+{
+  "name": "Flappy Clone Mobile",
+  "version": "0.0.0",
+  "homepage": "https://github.com/luyzdeleon/flappy_clone_mobile",
+  "authors": [
+    "Luis de Leon <luyzdeleon@gmail.com>"
+  ],
+  "description": "A flappy bird clone for mobile",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "phaser": "~2.3.0"
+  }
+}

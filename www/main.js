@@ -1,5 +1,13 @@
 // Initialize Phaser, and create a 400x490px game
-var game = new Phaser.Game(400, 490, Phaser.AUTO, 'game-div');
+var game = new Phaser.Game(400, 490, Phaser.AUTO, 'game-div'),
+    currentlyDown = false;
+
+// Returns a random integer between min (included) and max (excluded)
+// Using Math.round() will give you a non-uniform distribution!
+// Source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
 
 // Create our 'main' state that will contain the game
 var mainState = {
@@ -21,6 +29,11 @@ var mainState = {
         // Here we set up the game, display sprites, etc.
         // Set the physics system
         game.physics.startSystem(Phaser.Physics.ARCADE);
+        game.scale.scaleMode = Phaser.ScaleManager.EXACT_FIT;
+
+        //this.game.scale.setUserScale(0.8, 0.8);
+        //this.game.stage.scale.startFullScreen();
+        //game.scale = Phaser.ScaleManager.SHOW_ALL; //resize your window to see the stage resize too
 
         // Display the bird on the screen
         this.bird = this.game.add.sprite(100, 245, 'bird');
@@ -31,12 +44,6 @@ var mainState = {
 
         //Changing anchor of the bird object
         this.bird.anchor.setTo(-0.2, 0.5);
-
-        // Call the 'jump' function when the spacekey is hit
-        var spaceKey = this.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-        spaceKey.onDown.add(this.jump, this);
-
-        var activePointer = this.game.input.activePointer;
 
         this.pipes = game.add.group(); // Create a group
         this.pipes.enableBody = true;  // Add physics to the group
@@ -55,9 +62,18 @@ var mainState = {
         this.jumpSound = game.add.audio('jump');
     },
 
+    goFull: function() {
+        this.game.scale.startFullScreen();
+    },
+
     update: function() {
         var activePointer = this.game.input.activePointer;
-        if (activePointer.isDown && (Date.now() - activePointer.previousTapTime >= (100))) {
+        if(activePointer.isUp){
+          currentlyDown = false;
+        }
+
+        if (!currentlyDown && activePointer.isDown && (Date.now() - activePointer.previousTapTime >= (100))) {
+            currentlyDown = true;
             if (!this.isJumping) {
                 this.jump();
             }
@@ -66,14 +82,18 @@ var mainState = {
         // This function is called 60 times per second
         // It contains the game's logic
         // If the bird is out of the world (too high or too low), call the 'restartGame' function
-        if (this.bird.inWorld == false)
+        if (this.bird.inWorld == false){
+          if (window.confirm("You lost! Try again?")) {
             this.restartGame();
+          }
+        }
 
         game.physics.arcade.overlap(this.bird, this.pipes, this.hitPipe, null, this);
 
         //Bird rotation
-        if (this.bird.angle < 20)
-            this.bird.angle += 1;
+        if (this.bird.angle < 20){
+          this.bird.angle += 1;
+        }
     },
 
     // Make the bird jump
@@ -113,16 +133,21 @@ var mainState = {
     },
     addRowOfPipes: function() {
         // Pick where the hole will be
-        var hole = Math.floor(Math.random() * 5) + 1;
+        // The total amount of pipes will be determined by the height of the screen
+        // and the height of the pipe asset
+        var total = 8,
+            hole = getRandomInt(2, 6);
 
         // Add the 6 pipes
-        for (var i = 0; i < 8; i++)
-            if (i != hole && i != hole + 1)
-                this.addOnePipe(400, i * 60 + 10);
+        for (var i = 0; i < total; i++){
+          if (i != hole && i != hole + 1){
+            this.addOnePipe(400, i * 60 + 10);
+          }
+        }
 
         if (!this.scoreStarted) {
-            this.scoreStarted = true;
-            this.scoreTimer = game.time.events.loop(1500, this.updateScore, this);
+          this.scoreStarted = true;
+          this.scoreTimer = game.time.events.loop(1500, this.updateScore, this);
         }
 
     },
